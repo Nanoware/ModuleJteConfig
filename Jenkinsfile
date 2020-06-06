@@ -6,7 +6,7 @@ node ("default-java") {
 
         echo "Copying in the build harness from an engine job"
         copyArtifacts(projectName: "Terasology/engine/develop", filter: "templates/build.gradle", flatten: true, selector: lastSuccessful())
-        copyArtifacts(projectName: "Terasology/engine/develop", filter: "*, gradle/wrapper/**, config/**, natives/**", selector: lastSuccessful())
+        copyArtifacts(projectName: "Terasology/engine/develop", filter: "*, gradle/wrapper/**, config/**, natives/**, buildSrc/**", selector: lastSuccessful())
 
         def realProjectName = findRealProjectName()
         echo "Setting real project name to: $realProjectName"
@@ -19,12 +19,12 @@ node ("default-java") {
             chmod +x gradlew
         """
     }
-    
+
     stage('Build') {
         sh './gradlew clean jar'
         archiveArtifacts 'gradlew, gradle/wrapper/*, templates/build.gradle, config/**, build/distributions/Terasology.zip, build/resources/main/org/terasology/version/versionInfo.properties, natives/**'
     }
-    
+
     stage('Test') {
         // Keep tests in a separate stage to cope with failing MTE
         sh './gradlew test'
@@ -34,11 +34,11 @@ node ("default-java") {
         // Run analytics like Checkstyle or PMD without running tests
         sh './gradlew check -x test'
     }
-    
+
     stage('JavaDoc') {
         sh './gradlew javadoc'
     }
-    
+
     stage('Publish') {
         if (env.BRANCH_NAME.equals("master") || env.BRANCH_NAME.equals("develop")) {
             withCredentials([usernamePassword(credentialsId: 'artifactory-gooey', usernameVariable: 'artifactoryUser', passwordVariable: 'artifactoryPass')]) {
@@ -48,7 +48,7 @@ node ("default-java") {
             println "Running on a branch other than 'master' or 'develop' bypassing publishing"
         }
     }
-    
+
     stage('Record') {
         // Test for the presence of Javadoc so we can skip it if there is none (otherwise would fail the build)
         if (fileExists("build/docs/javadoc/index.html")) {
@@ -66,10 +66,10 @@ node ("default-java") {
 
         //TODO: This makes a second check on Github instead of updating the job-related one
         //      Mark UNSTABLE builds as SUCCESS on Github.
-        step([ 
-            $class: 'GitHubCommitStatusSetter', 
+        step([
+            $class: 'GitHubCommitStatusSetter',
             statusResultSource: [
-                $class: 'ConditionalStatusResultSource', 
+                $class: 'ConditionalStatusResultSource',
                 results: [[$class: 'BetterThanOrEqualBuildResult', message: '', result: 'UNSTABLE', state: 'SUCCESS']]
             ]
         ])
