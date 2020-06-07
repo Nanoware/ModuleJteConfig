@@ -32,7 +32,7 @@ node ("default-java") {
 
     stage('Analytics') {
         // Run analytics like Checkstyle or PMD without running tests
-        sh './gradlew check -x test'
+        sh './gradlew check -x test spotbugsmain'
     }
 
     stage('JavaDoc') {
@@ -60,7 +60,7 @@ node ("default-java") {
         //      will turn the Github status to be failed.
         // junit testResults: 'build/test-results/test/*.xml', allowEmptyResults: true, healthScaleFactor: 0.0
         recordIssues tool: checkStyle(pattern: '**/build/reports/checkstyle/*.xml')
-        recordIssues tool: spotBugs(pattern: '**/build/reports/spotbugs/*.xml', useRankAsPriority: true)
+        recordIssues tool: spotBugs(pattern: '**/build/reports/spotbugs/main/*.xml', useRankAsPriority: true)
         recordIssues tool: pmdParser(pattern: '**/build/reports/pmd/*.xml')
         recordIssues tool: taskScanner(includePattern: '**/*.java,**/*.groovy,**/*.gradle', lowTags: 'WIBNIF', normalTags: 'TODO', highTags: 'ASAP')
 
