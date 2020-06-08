@@ -1,4 +1,4 @@
-node ("default-java") {
+node ("default-java || light-java") {
 
     stage('Prepare') {
         echo "Going to check out the things !"
