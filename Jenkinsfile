@@ -1,4 +1,7 @@
 node ("default-java || light-java") {
+    // TODO: Add to engine and elsewhere too, but base discards on branch? develop, master, or release might keep longer
+    // Only keep a single build's worth of artifacts before truncating (module jars get published to Artifactory anyway)
+    properties([buildDiscarder(logRotator(artifactNumToKeepStr: '1'))])
 
     stage('Prepare') {
         echo "Going to check out the things !"
@@ -22,7 +25,7 @@ node ("default-java || light-java") {
 
     stage('Build') {
         sh './gradlew clean jar'
-        archiveArtifacts 'gradlew, gradle/wrapper/*, templates/build.gradle, config/**, build/distributions/Terasology.zip, build/resources/main/org/terasology/version/versionInfo.properties, natives/**'
+        archiveArtifacts 'build/libs/*.jar'
     }
 
     stage('Publish') {
@@ -38,7 +41,7 @@ node ("default-java || light-java") {
     stage('Analytics') {
         sh './gradlew check spotbugsmain javadoc'
     }
-    
+
     stage('Record') {
         // Test for the presence of Javadoc so we can skip it if there is none (otherwise would fail the build)
         if (fileExists("build/docs/javadoc/index.html")) {
